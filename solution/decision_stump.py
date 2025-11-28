@@ -31,20 +31,15 @@ class DecisionStumpClassifier(BaseEstimator, ClassifierMixin):
         self.random_state = random_state
         self.alpha = alpha
 
-    """Definitions and documentation. Write informative docstrings for the class and each function,
-    describing input shapes (X: (n cases, n attributes), y: (n cases, )), return types, class-label
-    ordering, and any assumptions/edge-case behaviour (unseen categories, missing values, tie-
-    breaking, exceptions on floats)."""
-
     def fit(self, X, y) -> None:
         """
         Fit the Decision Stump Classifier to the data (Classifier training logic). 
         Performs a tie-breaker by choosing the first attribute in case of a tie in quality measure.
+        Handles missing values by treating them as a separate category using normalisation.
         
         Args:
             X (np.ndarray): Input feature matrix of shape (n_samples, n_attributes).
-            y (np.ndarray): Target labels of shape (n_samples,).
-
+            y (np.ndarray): Target labels of shape (n_samples).
         Raises:
             ValueError: If X contains floating point values.
         
@@ -108,6 +103,7 @@ class DecisionStumpClassifier(BaseEstimator, ClassifierMixin):
         """ Predict class probabilities for X.
         Has fallback to root prior with Laplace smoothing for unseen categories.
         Performs Laplace smoothing for all predictions.
+        Handles missing values by treating them as a separate category using normalisation.
 
         Args:
             X (np.ndarray): Input feature matrix of shape (n_samples, n_attributes).
