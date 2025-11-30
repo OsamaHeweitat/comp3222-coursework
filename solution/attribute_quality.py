@@ -80,6 +80,7 @@ def chi_squared_yates(table: np.ndarray) -> float:
     """Calculates the chi-squared statistic with Yates' correction of a given attribute split.
     Can handle any number of classes (columns) and any number of attribute values (rows).
     Safe-guards against division by zero in expected count calculation.
+    Only works for 2x2 tables otherwise returns standard chi-squared statistic.
 
     Args:
         table (np.ndarray): A 2D numpy array where rows represent attribute values and columns represent class counts. Example: np.array([[2, 3], [3, 2]])
@@ -87,6 +88,9 @@ def chi_squared_yates(table: np.ndarray) -> float:
     Returns:
         float: The chi-squared statistic with Yates' correction of the attribute split provided.
     """
+    if table.shape != (2, 2):
+        return chi_squared(table)
+    
     chi_squared_yates: float = 0.0
     total_cases: int = np.sum(table)
     parent_probabilities: np.ndarray = np.sum(table, axis=0) / total_cases

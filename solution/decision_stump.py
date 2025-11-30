@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score
 import numpy as np
 
 class DecisionStumpClassifier(BaseEstimator, ClassifierMixin):
-    """_summary_
+    """ A Decision Stump Classifier that selects the best attribute to split on based on a specified quality measure.
 
     Args:
         BaseEstimator (_type_): _description_
@@ -46,10 +46,10 @@ class DecisionStumpClassifier(BaseEstimator, ClassifierMixin):
         Returns:
             None: This method does not return any value.
         """
-        X = self._normalise_X(X)
-
         if np.issubdtype(X.dtype, np.floating):
             raise ValueError("No floats allowed in X.")
+        
+        X = self._normalise_X(X)
         
         if self.n_attributes is None:
             attributes_to_evaluate = np.arange(X.shape[1])
@@ -58,6 +58,7 @@ class DecisionStumpClassifier(BaseEstimator, ClassifierMixin):
             attributes_to_evaluate = rng.choice(X.shape[1], self.n_attributes, replace=False)
         
         classes = np.unique(y)
+        self.classes_ = classes
         c = len(classes)
 
         chosen_attr: int = -1
@@ -108,9 +109,14 @@ class DecisionStumpClassifier(BaseEstimator, ClassifierMixin):
         Args:
             X (np.ndarray): Input feature matrix of shape (n_samples, n_attributes).
 
+        Raises:
+            ValueError: If X contains floating point values.
+
         Returns:
             np.ndarray: Predicted class probabilities of shape (n_samples, n_classes).
         """
+        if np.issubdtype(X.dtype, np.floating):
+            raise ValueError("No floats allowed in X.")
         X = self._normalise_X(X)
         n_samples = X.shape[0]
         n_classes = len(self.root_counts)
