@@ -34,7 +34,6 @@ class TestDecisionStump(unittest.TestCase):
 
         self.assertEqual(chosen_attr1, chosen_attr2)
     
-    # predict proba returns valid probability vectors aligned with the learned class order;
     def test_predict_proba_validity(self):
         X = np.array([[1, 2], [3, 4], [1, 4], [3, 2]])
         y = np.array([0, 1, 0, 1])
@@ -43,14 +42,11 @@ class TestDecisionStump(unittest.TestCase):
         clf.fit(X, y)
         proba = clf.predict_proba(X)
 
-        # correct shape?
         self.assertEqual(proba.shape, (len(X), len(np.unique(y))))
 
-        # each vector sums to 1
         for prob_vector in proba:
             self.assertAlmostEqual(np.sum(prob_vector), 1.0)
 
-        # all probabilities are >= 0
         self.assertTrue(np.all(proba >= 0))
 
     def test_unseen_category_fallback(self):
@@ -65,33 +61,29 @@ class TestDecisionStump(unittest.TestCase):
         clf = DecisionStumpClassifier()
         clf.fit(X_train, y_train)
 
-        # tie breaker may choose either attribute 0 or 1, we want 0
+        # tie breaker
         self.assertIsNotNone(clf.att_index)
         self.assertIn(clf.att_index, (0, 1))
         self.assertEqual(clf.att_index, 0)
 
         X_test = np.array([
-            [2, 0],   # unseen value 2 at the chosen split attribute (col 0)
+            [2, 0],   #unseen
             [2, 1],
         ], dtype=int)
 
         proba = clf.predict_proba(X_test)
 
-        # shape check
         n_classes = len(np.unique(y_train))
         self.assertEqual(proba.shape, (X_test.shape[0], n_classes))
 
-        # compute expected root prior with Laplace smoothing:
-        root_counts = np.bincount(y_train, minlength=n_classes)       # e.g. [2,2]
+        root_counts = np.bincount(y_train, minlength=n_classes)
         alpha = clf.alpha                                          
         expected = (root_counts + alpha) / (root_counts.sum() + alpha * n_classes)
 
-        # each returned probability vector must equal expected root prior
         for i in range(X_test.shape[0]):
             self.assertTrue(np.allclose(proba[i], expected),
                             msg=f"proba[{i}] = {proba[i]} != expected {expected}")
 
-        # final sanity: probability vectors sum to 1
         for v in proba:
             self.assertAlmostEqual(np.sum(v), 1.0)
 

@@ -73,7 +73,7 @@ if __name__ == "__main__":    # Example usage
     print(len(dirs))
     diff = 0
     for name in dirs:
-        X, y= load_tabular_xy("../data/"+name+"/"+name+".data")
+        X, y= load_tabular_xy("./data/"+name+"/"+name+".data")
         print(name+":", type(X), X.shape, y.shape, "Unique y:", set(y))
         dt = DecisionTreeClassifier()
         enc = OneHotEncoder(handle_unknown="ignore", sparse_output=False)

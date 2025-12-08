@@ -61,6 +61,8 @@ class DecisionStumpClassifier(BaseEstimator, ClassifierMixin):
         self.classes_ = classes
         c = len(classes)
 
+        class_lookup = {cls: idx for idx, cls in enumerate(classes)}
+
         chosen_attr: int = -1
         chosen_attr_quality: float = -1.0
         for attr in attributes_to_evaluate:
@@ -69,8 +71,10 @@ class DecisionStumpClassifier(BaseEstimator, ClassifierMixin):
             v: int = len(unique_values)
             table: np.ndarray = np.zeros((v, c), dtype=int)
             for i in range(X.shape[0]):
+                # row_index = np.where(unique_values == X[i, attr])[0][0]
+                # class_index: int = np.where(classes == y[i])[0][0]
                 row_index = np.where(unique_values == X[i, attr])[0][0]
-                class_index: int = np.where(classes == y[i])[0][0]
+                class_index = class_lookup[y[i]]
                 table[row_index, class_index] += 1
             attr_quality: float = 0.0
 
@@ -88,7 +92,7 @@ class DecisionStumpClassifier(BaseEstimator, ClassifierMixin):
                     from solution.attribute_quality import chi_squared_yates
                     attr_quality = chi_squared_yates(table)
 
-            if attr_quality > chosen_attr_quality:
+            if attr_quality >= chosen_attr_quality:
                 chosen_attr_quality = attr_quality
                 chosen_attr = attr
                 chosen_values = unique_values
@@ -97,8 +101,12 @@ class DecisionStumpClassifier(BaseEstimator, ClassifierMixin):
         self.att_index = chosen_attr
         self.children_counts = {}
         for i, val in enumerate(chosen_values):
-            self.children_counts[val] = chosen_table[i, :]
-        self.root_counts = np.bincount(y, minlength=c)
+            # self.children_counts[val] = chosen_table[i, :]
+            full_row = np.zeros(len(classes), dtype=int)
+            full_row[:chosen_table[i].shape[0]] = chosen_table[i]
+            self.children_counts[val] = full_row
+        # self.root_counts = np.bincount(y, minlength=c)
+        self.root_counts = np.bincount(y, minlength=len(classes))
             
     def predict_proba(self, X) -> np.ndarray:
         """ Predict class probabilities for X.
@@ -164,7 +172,18 @@ class DecisionStumpClassifier(BaseEstimator, ClassifierMixin):
         nan_mask = np.vectorize(lambda v: isinstance(v, float) and np.isnan(v))(X_norm)
         X_norm[nan_mask] = "__MISSING__"
         return X_norm
-    
+
+    def describe(self):
+        print(f"--- Decision Stump ---")
+        # print(f"Chosen attribute index: {self.att_index}")
+        print(f"Quality measure: {self.quality_measure}")
+        print(f"Classes: {self.classes_}")
+        print("Root counts:", self.root_counts)
+
+        print("Children:")
+        for val, counts in self.children_counts.items():
+            print(f"  If X[{self.att_index}] == {val}: class_counts = {counts}")
+
 if __name__ == "__main__":
     X = np.array([
         ["yes", "no",  "yes"],

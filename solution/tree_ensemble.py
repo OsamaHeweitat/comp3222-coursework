@@ -44,6 +44,19 @@ class TreeEnsembleClassifier(BaseEstimator, ClassifierMixin):
             stump.fit(X[row_indices][:, feature_indices], y_encoded[row_indices])
             self.estimators_.append((stump, feature_indices))
         self.n_features_in_ = X.shape[1]
+        # self.describe()
+
+    def describe(self):
+        print("=== Tree Ensemble ===")
+        print(f"n_estimators = {len(self.estimators_)}")
+        print(f"average_probas = {self.average_probas}")
+
+        for i, (stump, feature_indices) in enumerate(self.estimators_):
+            print(f"\nEstimator {i}:")
+            print(f"Feature subset used: {list(feature_indices)}")
+            print("Chosen global feature:", feature_indices[stump.att_index])
+            stump.describe()
+
 
     def predict_proba(self, X) -> np.ndarray:
         if np.issubdtype(X.dtype, np.floating):
@@ -98,3 +111,36 @@ class TreeEnsembleClassifier(BaseEstimator, ClassifierMixin):
         nan_mask = np.vectorize(lambda v: isinstance(v, float) and np.isnan(v))(X_norm)
         X_norm[nan_mask] = "__MISSING__"
         return X_norm
+    
+if __name__ == "__main__":
+    X = np.array([
+        ["yes", "no",  "yes"],
+        ["yes", "yes", "yes"],
+        ["yes", "no",  "no"],
+        ["yes", "no",  "no"],
+        ["no",  "yes", "no"],
+        ["no",  "yes", "yes"],
+        ["no",  "yes", "yes"],
+        ["no",  "yes", "yes"],
+        ["no",  "no",  "yes"],
+        ["no",  "no",  "yes"],
+    ], dtype=object)
+
+    y = np.array([
+        "Islay",
+        "Islay",
+        "Islay",
+        "Islay",
+        "Islay",
+        "Speyside",
+        "Speyside",
+        "Speyside",
+        "Speyside",
+        "Speyside",
+    ], dtype=object)
+
+    clf = TreeEnsembleClassifier(n_estimators=10, random_state=67)
+    clf.fit(X, y)
+    y_pred = clf.predict(X)
+    print("Predictions:", y_pred)
+    print("Accuracy:", accuracy_score(y, y_pred))
